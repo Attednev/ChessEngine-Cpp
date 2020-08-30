@@ -108,17 +108,17 @@ class GameState {
 	private: void addPawnMove(int r, int c) {
 		int offset = this->isWhiteToMove ? -1 : 1;
 		if (this->board[r + offset][c] == "  ") { // Single pawn advance (Check field infront of the pawn)
-			this->possibleMoves.push_back(*new Move(r, c, r + offset, c, this->board));
+			this->validMoves.push_back(*new Move(r, c, r + offset, c, this->board));
 			if (r == 6 && this->board[r + (2 * offset)][c] == "  ") { // Double pawn advance (Check the field 2 infront of the pawn)
-				this->possibleMoves.push_back(*new Move(r, c, r + (2 * offset), c, this->board));
+				this->validMoves.push_back(*new Move(r, c, r + (2 * offset), c, this->board));
 			}
 		}
 		char enemy = this->isWhiteToMove ? 'b' : 'w';
 		if (c <= 7 && (this->board[r + offset][c + 1]).at(0) == enemy) { // Capture to the right
-			this->possibleMoves.push_back(*new Move(r, c, r + offset, c + 1, this->board));
+			this->validMoves.push_back(*new Move(r, c, r + offset, c + 1, this->board));
 		}
 		if (c >= 0 && (this->board[r + offset][c - 1]).at(0) == enemy) { // Capture to the left
-			this->possibleMoves.push_back(*new Move(r, c, r + offset, c - 1, this->board));
+			this->validMoves.push_back(*new Move(r, c, r + offset, c - 1, this->board));
 		}
 	}
 	
@@ -143,7 +143,7 @@ class GameState {
 		for (int i = 0; i < 4; i++) {
 			for (int row = r + rows[i], col = c + cols[i]; row < 8 && row >= 0 && col < 8 && col >= 0; row += rows[i], col += cols[i]) {
 				if ((this->board[row][col]).at(0) == turn) break; // Own Piece, so no need to keep on checkig
-				this->possibleMoves.push_back(*new Move(r, c, row, col, this->board));
+				this->validMoves.push_back(*new Move(r, c, row, col, this->board));
 				if ((this->board[row][col]).at(0) == enemy) break; // Enemy Piece, so allow to capture, but dont go further
 			}
 		}
@@ -159,7 +159,7 @@ class GameState {
 			int col = c + cols[i];
 			// Inside the board and not attacking an ally
 			if (row >= 0 && row < 8 && col >= 0 && col < 8 && (this->board[row][col]).at(0) != turn) {
-				this->possibleMoves.push_back(*new Move(r, c, row, col, this->board));
+				this->validMoves.push_back(*new Move(r, c, row, col, this->board));
 			}
 		}
 	}
@@ -179,7 +179,7 @@ class GameState {
 			int row = r + rows[i];
 			int col = c + cols[i];
 			if (row >= 0 && row < 8 && col >= 0 && col < 8 && (this->board[row][col]).at(0) != turn) {
-				this->possibleMoves.push_back(*new Move(r, c, row, col, this->board));
+				this->validMoves.push_back(*new Move(r, c, row, col, this->board));
 			}
 		}
 	}
