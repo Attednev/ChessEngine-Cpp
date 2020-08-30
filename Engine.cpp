@@ -1,5 +1,6 @@
 #include <iostream>
-#include <list> 
+#include <array>
+#include <list>
 
 using namespace std;
 
@@ -35,7 +36,7 @@ class GameState {
 		{"wR", "wN", "wB", "wQ", "wK", "wB", "wN", "wR"}
 	};
 	private: bool isWhiteToMove = true;
-	private: list<Vector[]> validMoves;
+	private: list<array<Vector, 2>> validMoves;
 	private: list<LogEntry> log;
 	
 	// This function is used for an external program which uses this engine to pass in a move a player makes
