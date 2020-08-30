@@ -1,16 +1,17 @@
 #include <iostream>
 #include <array>
 #include <list>
-
 using namespace std;
 
-
+// NOTE: Casteling
+// NOTE: Add en-passant
+// NOTE: Add pawn promotion
 
 class LogEntry {
 	
 };
 
-
+// Helper class to store a x and y value
 class Vector {
 	public: int x;
 	public: int y;
@@ -20,11 +21,6 @@ class Vector {
 	}
 	public: equals(Vector v) { return (this->x == v.x && this->y == v.y); }
 };
-
-
-
-		// NOTE: Add en-passant
-		// NOTE: Add pawn promotion
 
 class GameState {
 	// This vairalbe stores the current board, the pieces are expressed as a combination of two letters,
@@ -71,6 +67,7 @@ class GameState {
 	private: void getValidMoves() {
 		// clear the current list
 		// get all moves
+		// remove the invalid moves
 	}
 	
 	// Helper function to fill the "validMoves" variable with all moves (also illegal moves) that the user has available
@@ -182,9 +179,7 @@ class GameState {
 				this->validMoves.push_back(*new Move(r, c, row, col, this->board));
 			}
 		}
-	}
-	
-	
+	}	
 	
 };
 
