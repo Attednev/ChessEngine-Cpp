@@ -71,9 +71,9 @@ class GameState {
 	// This function fills the "validMoves" variable with all the possible moves that the current player can play
 	private: void getValidMoves() {
 		list<array<Vector, 2>> list;
-		this->validMoves.clear(); // clear the current list
 		this->getAllMoves(list); // get all moves
-		// remove the invalid moves
+		this->removeIllegalMoves(list); // remove the invalid moves
+		this->validMoves = list;
 	}
 	
 	// Helper function to fill the "validMoves" variable with all moves (also illegal moves) that the user has available
@@ -108,7 +108,9 @@ class GameState {
 	}
 	
 	// Helper function to remove all illegal moves from the list
-	
+	private: void removeIllegalMoves(list<array<Vector, 2>>& list) {
+		
+	}
 	
 	// Function to add all the possible moves for pawns
 	private: void addPawnMove(int r, int c, list<array<Vector, 2>>& list) {
