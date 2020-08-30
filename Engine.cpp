@@ -10,6 +10,10 @@ using namespace std;
 class LogEntry {
 	public: string board[8][8];
 	public: bool isWhiteToMove;
+	public: LogEntry(string board[8][8], bool isWhiteToMove) {
+		copy(&board[0][0], &board[0][0] + 64, &this->board[0][0]);
+		this->isWhiteToMove = isWhiteToMove;
+	}
 };
 
 // Helper class to store a x and y value
@@ -53,8 +57,8 @@ class GameState {
 				this->board[endRow][endCol] = this->board[startRow][startCol];
 				this->board[startRow][startCol] = "  ";
 				// log the board
-				//LogEntry entry();
-				//this->log.push_back(entry);
+				LogEntry entry(this->board, this->isWhiteToMove);
+				this->log.push_back(entry);
 				this->isWhiteToMove = !this->isWhiteToMove; // chage turn
 				this->getValidMoves(); // get moves for the next player
 			}
@@ -64,8 +68,13 @@ class GameState {
 	// this function is used to undo the last recent move played
 	public: void undoMove() {
 		// get last move
-		// restore the board
+		LogEntry entry = this->log.back();
+		this->log.pop_back();
+		// restore the gamestate
+		copy(&this->board[0][0], &this->board[0][0] + 64, &entry.board[0][0]);
+		this->isWhiteToMove = entry.isWhiteToMove;
 		// get moves for the current player
+		this->getValidMoves();
 	}
 	
 	// This function fills the "validMoves" variable with all the possible moves that the current player can play
@@ -79,6 +88,7 @@ class GameState {
 	// Helper function to fill the "validMoves" variable with all moves (also illegal moves) that the user has available
 	private: void getAllMoves(list<array<Vector, 2>>& list) {
 		char turn = this->isWhiteToMove ? 'w' : 'b';
+		// Loop through all fields and check if there is piece that the current player owns and get its moves
 		for (int r = 0; r < 8; r++) {
 			for (int c = 0; c < 8; c++) {
 				if ((this->board[r][c]).at(0) == turn) {
