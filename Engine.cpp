@@ -1,4 +1,5 @@
 #include <iostream>
+#include <list> 
 
 using namespace std;
 
@@ -12,10 +13,11 @@ class LogEntry {
 class Vector {
 	public: int x;
 	public: int y;
-	public: Vecot(int x, int y) {
+	public: Vector(int x, int y) {
 		this->x = x;
 		this->y = y;
 	}
+	public: equals(Vector v) { return (this->x == v.x && this->y == v.y); }
 };
 
 
@@ -33,15 +35,21 @@ class GameState {
 		{"wR", "wN", "wB", "wQ", "wK", "wB", "wN", "wR"}
 	};
 	private: bool isWhiteToMove = true;
-	private: list<vector<int>, vector<int>>
+	private: list<Vector[]> validMoves;
+	private: list<LogEntry> log;
 	
 	// This function is used for an external program which uses this engine to pass in a move a player makes
 	public: void playMove(int startRow, int startCol, int endRow, int endCol) {
 		// is the move allowd
+		Vector move[2] = {{startRow, startCol}, {endRow, endCol}};
+		
 		// play the move
+		this->board[endRow][endCol] = this->board[startRow][startCol];
+		this->board[startRow][startCol] = "  ";
 		// log the board
-		// chage turn
+		this->isWhiteToMove = !this->isWhiteToMove; // chage turn
 		// get moves for the next player
+		
 	}
 	
 	// this function is used to undo the last recent move played
