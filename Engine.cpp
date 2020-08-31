@@ -25,11 +25,11 @@ class Vector {
 		this->x = x;
 		this->y = y;
 	}
-	public: bool equals(Vector v) { return (this->x == v.x && this->y == v.y); }
+	public: bool equals(Vector v) const { return (this->x == v.x && this->y == v.y); }
 };
 
 class GameState {
-	// This vairalbe stores the current board, the pieces are expressed as a combination of two letters,
+	// This variable stores the current board, the pieces are expressed as a combination of two letters,
 	// The first letter defines the color; the second the piece type. Empty squares are defined as "  "
 	public: string board[8][8] = {
 		{"bR", "bN", "bB", "bQ", "bK", "bB", "bN", "bR"},
@@ -49,20 +49,25 @@ class GameState {
 	};
 	private: list<LogEntry> log;
 	
-	// Costructor: calls the getValidMoves function so the white player can play a move
+	// Constructor: calls the getValidMoves function so the white player can play a move
 	public: GameState() { this->getValidMoves(); }
 	
 	// This function is used for an external program which uses this engine to pass in a move a player makes
 	public: void playMove(int startRow, int startCol, int endRow, int endCol) {
-		// is the move allowd
+		// is the move allowed
 		Vector move[2] = {{startRow, startCol}, {endRow, endCol}};
 		for (array<Vector,2> arr : this->validMoves) {
 			if (arr[0].equals(move[0]) && arr[1].equals(move[1])) {
+				// Update King position before executing the move
+				if (this->board[startRow][startCol].at(1) == 'K') {
+					this->kingPositions.at(this->board[startRow][startCol].at(0)) = move[1];
+				}
 				this->move(startRow, startCol, endRow, endCol);
+				
 				// log the board
-				LogEntry entry(this->board, this->isWhiteToMove);
-				this->log.push_back(entry);
-				this->isWhiteToMove = !this->isWhiteToMove; // chage turn
+				//LogEntry entry(this->board, this->isWhiteToMove);
+				//this->log.push_back(entry);
+				this->isWhiteToMove = !this->isWhiteToMove; // change turn
 				this->getValidMoves(); // get moves for the next player
 			}
 		}
@@ -80,7 +85,7 @@ class GameState {
 		// get last move
 		LogEntry entry = this->log.back();
 		this->log.pop_back();
-		// restore the gamestate
+		// restore the GameState
 		copy(&this->board[0][0], &this->board[0][0] + 64, &entry.board[0][0]);
 		this->isWhiteToMove = entry.isWhiteToMove;
 		this->getValidMoves(); // get moves for the current player
@@ -127,11 +132,12 @@ class GameState {
 	// Helper function to remove all illegal moves from the list
 	private: void removeIllegalMoves(list<array<Vector, 2>>& list) {
 		// loop through the list
-		//for () {
-		// make the move
-		// isCheck (if yes -> remove move from list)
+		for (array<Vector, 2> arr : list) {
+			this->move(arr[0].x, arr[0].y, arr[1].x, arr[1].y); // make the move
+			if () {
+				// The King is in check and thatfore that piece is not allowed to be moved
 		// undo move
-		//}
+		}
 	}
 	
 	// This function undos the move which was made specifically in removeIllegalMoves method
@@ -152,7 +158,7 @@ class GameState {
 		list<array<Vector, 2>> enemyMoves;
 		this->getAllMoves(enemyMoves);
 		this->isWhiteToMove = !this->isWhiteToMove; // change the turn back
-		// loop through moves and check if the endpos equals pos.x pos.y
+		// loop through moves and check if the endPos equals pos.x pos.y
 		for (array<Vector, 2> arr : enemyMoves) {
 			if (arr[1].x == pos.x && arr[1].y == pos.y) {
 				return true;
@@ -164,7 +170,7 @@ class GameState {
 	// Function to add all the possible moves for pawns
 	private: void addPawnMove(int r, int c, list<array<Vector, 2>>& list) {
 		int offset = this->isWhiteToMove ? -1 : 1;
-		if (this->board[r + offset][c] == "  ") { // Single pawn advance (Check field infront of the pawn)
+		if (this->board[r + offset][c] == "  ") { // Single pawn advance (Check field in front of the pawn)
 			list.push_back(array<Vector, 2>{*new Vector(r, c), *new Vector(r + offset, c)});
 			if (r == 6 && this->board[r + (2 * offset)][c] == "  ") { // Double pawn advance (Check the field 2 infront of the pawn)
 				list.push_back(array<Vector, 2>{*new Vector(r, c), *new Vector(r + (2 * offset), c)});
@@ -194,12 +200,12 @@ class GameState {
 	}
 	
 	// Helper function for rooks and bishops
-	private: void bishopRookHelper(int rows[], int cols[], int r, int c, list<array<Vector, 2>>& list) {
+	private: void bishopRookHelper(const int rows[], const int cols[], int r, int c, list<array<Vector, 2>>& list) {
 		char turn = this->isWhiteToMove ? 'w' : 'b';
 		char enemy = this->isWhiteToMove ? 'b' : 'w';
 		for (int i = 0; i < 4; i++) {
 			for (int row = r + rows[i], col = c + cols[i]; row < 8 && row >= 0 && col < 8 && col >= 0; row += rows[i], col += cols[i]) {
-				if ((this->board[row][col]).at(0) == turn) break; // Own Piece, so no need to keep on checkig
+				if ((this->board[row][col]).at(0) == turn) break; // Own Piece, so no need to keep on checking
 				list.push_back(array<Vector, 2>{*new Vector(r, c), *new Vector(row, col)});
 				if ((this->board[row][col]).at(0) == enemy) break; // Enemy Piece, so allow to capture, but dont go further
 			}
