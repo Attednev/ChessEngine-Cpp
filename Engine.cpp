@@ -61,6 +61,42 @@ class GameState {
 	// Constructor: calls the getValidMoves function so the white player can play a move
 	public: GameState() { this->getValidMoves(); }
 	
+	// This function allows an external program to access the possible moves for a single piece
+	public: list<Vector> getMovesForPiece(int r, int c) {
+		// Get all the possible moves (same as in the normal process for validating the moves)
+        char turn = this->isWhiteToMove ? 'w' : 'b';
+        list<array<Vector, 2>> moves;
+        if (this->board[r][c].at(0) == turn) {
+            char piece = this->board[r][c].at(1);
+            switch (piece) {
+                case 'P':
+                    this->addPawnMove(r, c, moves);
+                    break;
+                case 'R':
+                    this->addRookMove(r, c, moves);
+                    break;
+                case 'N':
+                    this->addKnightMove(r, c, moves);
+                    break;
+                case 'B':
+                    this->addBishopMove(r, c, moves);
+                    break;
+                case 'Q':
+                    this->addQueenMove(r, c, moves);
+                    break;
+                default:
+                    this->addKingMove(r, c, moves);
+            }
+            this->removeIllegalMoves(moves);
+        }
+		// Remove the source position since it is not needed
+		list<Vector> returnVal;
+		for (array<Vector, 2> m : moves) {
+			returnVal.push_back(m[1]);
+		}
+		return returnVal;
+	}
+	
 	// This function is used for an external program which uses this engine to pass in a move a player makes
 	public: void playMove(int startRow, int startCol, int endRow, int endCol) {
 		// is the move allowed
