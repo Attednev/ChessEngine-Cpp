@@ -4,7 +4,7 @@
 #include <map>
 using namespace std;
 
-// NOTE: Casteling
+// NOTE: Castling
 // NOTE: Add en-passant
 // NOTE: Add pawn promotion
 
@@ -80,7 +80,7 @@ class GameState {
 		this->board[startRow][startCol] = "  ";
 	}
 	
-	// this function is used to undo the last recent move played
+	// This function is used to undo the last recent move played
 	public: void undoMove() {
 		// get last move
 		LogEntry entry = this->log.back();
@@ -132,16 +132,20 @@ class GameState {
 	// Helper function to remove all illegal moves from the list
 	private: void removeIllegalMoves(list<array<Vector, 2>>& list) {
 		// loop through the list
-		for (array<Vector, 2> arr : list) {
-			this->move(arr[0].x, arr[0].y, arr[1].x, arr[1].y); // make the move
-			if () {
-				// The King is in check and thatfore that piece is not allowed to be moved
-		// undo move
-		}
+        for (auto it = list.begin(); it != list.end(); it++) {
+            array<Vector, 2> arr = *it;
+            string occupiedSquare = this->board[arr[1].x][arr[1].y];
+            this->move(arr[0].x, arr[0].y, arr[1].x, arr[1].y); // make the move
+            if (this->isCheck()) {
+                // The King is in check and therefore that piece is not allowed to be moved
+                list.erase(it);// Remove the move from the list (remove by iterator)
+            }
+            this->undo(arr, occupiedSquare); // undo move
+        }
 	}
 	
-	// This function undos the move which was made specifically in removeIllegalMoves method
-	private: void undo(array<Vector, 2> arr, string occupiedSquare) {
+	// This function undoes the move which was made specifically in removeIllegalMoves method
+	private: void undo(array<Vector, 2> arr, string& occupiedSquare) {
 		this->board[arr[0].x][arr[0].y] = this->board[arr[1].x][arr[1].y];
 		this->board[arr[1].x][arr[1].y] = occupiedSquare;
 	}
@@ -172,7 +176,7 @@ class GameState {
 		int offset = this->isWhiteToMove ? -1 : 1;
 		if (this->board[r + offset][c] == "  ") { // Single pawn advance (Check field in front of the pawn)
 			list.push_back(array<Vector, 2>{*new Vector(r, c), *new Vector(r + offset, c)});
-			if (r == 6 && this->board[r + (2 * offset)][c] == "  ") { // Double pawn advance (Check the field 2 infront of the pawn)
+			if (r == 6 && this->board[r + (2 * offset)][c] == "  ") { // Double pawn advance (Check the field 2 in front of the pawn)
 				list.push_back(array<Vector, 2>{*new Vector(r, c), *new Vector(r + (2 * offset), c)});
 			}
 		}
