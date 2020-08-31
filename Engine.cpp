@@ -7,7 +7,6 @@ using namespace std;
 // NOTE: Castling
 // NOTE: Add en-passant
 // NOTE: Add pawn promotion
-// NOTE: Incude the log in the logs? (Very space inefficient)
 
 // Helper class to store a x and y value
 class Vector {
