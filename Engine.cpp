@@ -132,13 +132,14 @@ class GameState {
 	// Helper function to remove all illegal moves from the list
 	private: void removeIllegalMoves(list<array<Vector, 2>>& list) {
 		// loop through the list
-        for (auto it = list.begin(); it != list.end(); it++) {
-            array<Vector, 2> arr = *it;
+        for (int i = list.size() - 1; i >= 0; i--) {
+            // Get the array and store the piece that is in the destination square so we can undo it later
+            array<Vector, 2> arr = *next(list.begin(), i);
             string occupiedSquare = this->board[arr[1].x][arr[1].y];
             this->move(arr[0].x, arr[0].y, arr[1].x, arr[1].y); // make the move
             if (this->isCheck()) {
                 // The King is in check and therefore that piece is not allowed to be moved
-                list.erase(it);// Remove the move from the list (remove by iterator)
+                list.erase(next(list.begin(), i));// Remove the move from the list (remove by iterator)
             }
             this->undo(arr, occupiedSquare); // undo move
         }
