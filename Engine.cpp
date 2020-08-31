@@ -8,15 +8,6 @@ using namespace std;
 // NOTE: Add en-passant
 // NOTE: Add pawn promotion
 
-class LogEntry {
-	public: string board[8][8];
-	public: bool isWhiteToMove;
-	public: LogEntry(string board[8][8], bool isWhiteToMove) {
-		copy(&board[0][0], &board[0][0] + 64, &this->board[0][0]);
-		this->isWhiteToMove = isWhiteToMove;
-	}
-};
-
 // Helper class to store a x and y value
 class Vector {
 	public: int x;
@@ -26,6 +17,17 @@ class Vector {
 		this->y = y;
 	}
 	public: bool equals(Vector v) const { return (this->x == v.x && this->y == v.y); }
+};
+
+class LogEntry {
+	public: string board[8][8];
+	public: bool isWhiteToMove;
+	public: map<char, Vector> kingPositions;
+	public: LogEntry(string board[8][8], bool isWhiteToMove, map<char, Vector> kingPositions) {
+        copy(&board[0][0], &board[0][0] + 64, &this->board[0][0]);
+        this->isWhiteToMove = isWhiteToMove;
+        this->kingPositions = std::move(kingPositions);
+    }
 };
 
 class GameState {
@@ -43,11 +45,16 @@ class GameState {
 	};
 	private: bool isWhiteToMove = true;
 	private: list<array<Vector, 2>> validMoves;
-	private: std::map<char, Vector> kingPositions = {
+	private: map<char, Vector> kingPositions = {
 		{'w', Vector(7, 4)},
 		{'b', Vector(0, 4)}
 	};
+	private: map<char, array<bool, 2>> castleRights = {
+		{'w', array<bool, 2>{true, true}},
+		{'b', array<bool, 2>{true, true}}
+	};
 	private: list<LogEntry> log;
+	// CASTLERIGHTS
 	
 	// Constructor: calls the getValidMoves function so the white player can play a move
 	public: GameState() { this->getValidMoves(); }
@@ -131,8 +138,8 @@ class GameState {
 	
 	// Helper function to remove all illegal moves from the list
 	private: void removeIllegalMoves(list<array<Vector, 2>>& list) {
-		// loop through the list
-        for (int i = list.size() - 1; i >= 0; i--) {
+		// loop through the list (we have to check i < list.size() since we use an unsigned int which will never be < 0, which means that else this would be an infinite loop)
+        for (unsigned int i = list.size() - 1; i >= 0 && i < list.size(); i--) {
             // Get the array and store the piece that is in the destination square so we can undo it later
             array<Vector, 2> arr = *next(list.begin(), i);
             string occupiedSquare = this->board[arr[1].x][arr[1].y];
@@ -146,9 +153,9 @@ class GameState {
 	}
 	
 	// This function undoes the move which was made specifically in removeIllegalMoves method
-	private: void undo(array<Vector, 2> arr, string& occupiedSquare) {
+	private: void undo(array<Vector, 2> arr, string occupiedSquare) {
 		this->board[arr[0].x][arr[0].y] = this->board[arr[1].x][arr[1].y];
-		this->board[arr[1].x][arr[1].y] = occupiedSquare;
+		this->board[arr[1].x][arr[1].y] = std::move(occupiedSquare);
 	}
 	
 	// This function checks if the king of the current active player is under attack
