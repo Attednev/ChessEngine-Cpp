@@ -2,9 +2,11 @@
 
 ### This is an engine written in c++ which can be used as a backend for a simple game of chess 
 
+---
+
 ## Implementation
 
-As this engine is written in c++ you will have to use some sort of interface compile (e.g. [SWIG](http://www.swig.org/exec.html)) to use it in the language you would like to use.
+As this engine is written in c++ you will have to use some sort of interface compile (e.g. [SWIG](http://www.swig.org/exec.html)) to use it in the language you want.
 
 ## Usage
 
