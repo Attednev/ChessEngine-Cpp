@@ -1,6 +1,7 @@
 #include <iostream>
 #include <array>
 #include <list>
+#include <map>
 using namespace std;
 
 // NOTE: Casteling
@@ -24,7 +25,7 @@ class Vector {
 		this->x = x;
 		this->y = y;
 	}
-	public: equals(Vector v) { return (this->x == v.x && this->y == v.y); }
+	public: bool equals(Vector v) { return (this->x == v.x && this->y == v.y); }
 };
 
 class GameState {
@@ -42,6 +43,10 @@ class GameState {
 	};
 	private: bool isWhiteToMove = true;
 	private: list<array<Vector, 2>> validMoves;
+	private: std::map<char, Vector> kingPositions = {
+		{'w', Vector(7, 4)},
+		{'b', Vector(0, 4)}
+	};
 	private: list<LogEntry> log;
 	
 	// Costructor: calls the getValidMoves function so the white player can play a move
@@ -53,9 +58,7 @@ class GameState {
 		Vector move[2] = {{startRow, startCol}, {endRow, endCol}};
 		for (array<Vector,2> arr : this->validMoves) {
 			if (arr[0].equals(move[0]) && arr[1].equals(move[1])) {
-				// play the move
-				this->board[endRow][endCol] = this->board[startRow][startCol];
-				this->board[startRow][startCol] = "  ";
+				this->move(startRow, startCol, endRow, endCol);
 				// log the board
 				LogEntry entry(this->board, this->isWhiteToMove);
 				this->log.push_back(entry);
@@ -63,6 +66,13 @@ class GameState {
 				this->getValidMoves(); // get moves for the next player
 			}
 		}
+	}
+	
+	// Helper function to only execute the move without logging and checking for validity
+	private: void move(int startRow, int startCol, int endRow, int endCol) {
+		// play the move
+		this->board[endRow][endCol] = this->board[startRow][startCol];
+		this->board[startRow][startCol] = "  ";
 	}
 	
 	// this function is used to undo the last recent move played
@@ -73,16 +83,13 @@ class GameState {
 		// restore the gamestate
 		copy(&this->board[0][0], &this->board[0][0] + 64, &entry.board[0][0]);
 		this->isWhiteToMove = entry.isWhiteToMove;
-		// get moves for the current player
-		this->getValidMoves();
+		this->getValidMoves(); // get moves for the current player
 	}
 	
 	// This function fills the "validMoves" variable with all the possible moves that the current player can play
 	private: void getValidMoves() {
-		list<array<Vector, 2>> list;
-		this->getAllMoves(list); // get all moves
-		this->removeIllegalMoves(list); // remove the invalid moves
-		this->validMoves = list;
+		this->getAllMoves(this->validMoves); // get all moves
+		this->removeIllegalMoves(this->validMoves); // remove the invalid moves
 	}
 	
 	// Helper function to fill the "validMoves" variable with all moves (also illegal moves) that the user has available
@@ -119,7 +126,39 @@ class GameState {
 	
 	// Helper function to remove all illegal moves from the list
 	private: void removeIllegalMoves(list<array<Vector, 2>>& list) {
-		
+		// loop through the list
+		//for () {
+		// make the move
+		// isCheck (if yes -> remove move from list)
+		// undo move
+		//}
+	}
+	
+	// This function undos the move which was made specifically in removeIllegalMoves method
+	private: void undo(array<Vector, 2> arr, string occupiedSquare) {
+		this->board[arr[0].x][arr[0].y] = this->board[arr[1].x][arr[1].y];
+		this->board[arr[1].x][arr[1].y] = occupiedSquare;
+	}
+	
+	// This function checks if the king of the current active player is under attack
+	private: bool isCheck() {
+		return this->squareUnderAttack(this->isWhiteToMove ? this->kingPositions.at('w') : this->kingPositions.at('b'));
+	}
+	
+	// This function checks if the square r, c is under attack
+	private: bool squareUnderAttack(Vector pos) {
+		this->isWhiteToMove = !this->isWhiteToMove; // change turn
+		// get all the moves that the enemy player could make the next move
+		list<array<Vector, 2>> enemyMoves;
+		this->getAllMoves(enemyMoves);
+		this->isWhiteToMove = !this->isWhiteToMove; // change the turn back
+		// loop through moves and check if the endpos equals pos.x pos.y
+		for (array<Vector, 2> arr : enemyMoves) {
+			if (arr[1].x == pos.x && arr[1].y == pos.y) {
+				return true;
+			}
+		}
+		return false;
 	}
 	
 	// Function to add all the possible moves for pawns
