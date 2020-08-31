@@ -7,6 +7,7 @@ using namespace std;
 // NOTE: Castling
 // NOTE: Add en-passant
 // NOTE: Add pawn promotion
+// NOTE: Incude the log in the logs? (Very space inefficient)
 
 // Helper class to store a x and y value
 class Vector {
@@ -23,10 +24,12 @@ class LogEntry {
 	public: string board[8][8];
 	public: bool isWhiteToMove;
 	public: map<char, Vector> kingPositions;
-	public: LogEntry(string board[8][8], bool isWhiteToMove, map<char, Vector> kingPositions) {
+	public: map<char, array<bool, 2>> castleRights;
+	public: LogEntry(string board[8][8], bool isWhiteToMove, map<char, Vector> kingPositions, map<char, array<bool, 2>> castleRights) {
         copy(&board[0][0], &board[0][0] + 64, &this->board[0][0]);
         this->isWhiteToMove = isWhiteToMove;
         this->kingPositions = std::move(kingPositions);
+		this->castleRights = std::move(castleRights);
     }
 };
 
@@ -54,7 +57,6 @@ class GameState {
 		{'b', array<bool, 2>{true, true}}
 	};
 	private: list<LogEntry> log;
-	// CASTLERIGHTS
 	
 	// Constructor: calls the getValidMoves function so the white player can play a move
 	public: GameState() { this->getValidMoves(); }
@@ -70,10 +72,9 @@ class GameState {
 					this->kingPositions.at(this->board[startRow][startCol].at(0)) = move[1];
 				}
 				this->move(startRow, startCol, endRow, endCol);
-				
 				// log the board
-				//LogEntry entry(this->board, this->isWhiteToMove);
-				//this->log.push_back(entry);
+				LogEntry entry(this->board, this->isWhiteToMove,this->kingPositions, this->castleRights);
+				this->log.push_back(entry);
 				this->isWhiteToMove = !this->isWhiteToMove; // change turn
 				this->getValidMoves(); // get moves for the next player
 			}
@@ -95,6 +96,8 @@ class GameState {
 		// restore the GameState
 		copy(&this->board[0][0], &this->board[0][0] + 64, &entry.board[0][0]);
 		this->isWhiteToMove = entry.isWhiteToMove;
+		this->kingPositions = entry.kingPositions;
+		this->castleRights = entry.castleRights;
 		this->getValidMoves(); // get moves for the current player
 	}
 	
