@@ -4,8 +4,6 @@
 #include <map>
 using namespace std;
 
-// NOTE: Castling
-
 // Helper class to store a x and y value
 class Vector {
 	public: int x;
@@ -96,25 +94,39 @@ class GameState {
 	
 	// This function is used for an external program which uses this engine to pass in a move a player makes
 	public: void playMove(int startRow, int startCol, int endRow, int endCol) {
-		// is the move allowed
 		Vector move[2] = {{startRow, startCol}, {endRow, endCol}};
 		for (array<Vector,2> arr : this->validMoves) {
 			if (arr[0].equals(move[0]) && arr[1].equals(move[1])) {
-				// Update King position before executing the move
+				// Is the move allowed
 				if (this->board[startRow][startCol].at(1) == 'K') {
+					// Take away the castle right for this player as the king move
+                    this->castleRights.at(this->isWhiteToMove ? 'w' : 'b')[0] = false;
+                    this->castleRights.at(this->isWhiteToMove ? 'w' : 'b')[1] = false;
+                    if (startCol - endCol == 2) { // Castled long
+                        this->move(startRow, 0, startRow, 3);
+                    } else if (startCol - endCol == -2) { // Castled short
+                        this->move(startRow, 7, startRow, 5);
+                    }
+					// Update King position before executing the move
 					this->kingPositions.at(this->board[startRow][startCol].at(0)) = move[1];
 				} else if (this->board[startRow][startCol].at(1) == 'P') {
                     if (startCol != endCol && this->board[endRow][endCol].at(1) == ' ') {
                         // Captured en passant -> clear the square behind the current one
                         this->board[startRow][endCol] = "  ";
                     }
+				} else if (this->board[startRow][startCol].at(1) == 'R') {
+					if (startCol == 0) { // Take away right to castle long
+                        this->castleRights.at(this->isWhiteToMove ? 'w' : 'b')[0] = false;
+                    } else if (startCol == 7) { // Take away right to castle short
+                        this->castleRights.at(this->isWhiteToMove ? 'w' : 'b')[1] = false;
+                    }
 				}
 				this->move(startRow, startCol, endRow, endCol);
-				// log the board
+				// Log the board
 				LogEntry entry(this->board, this->isWhiteToMove,this->kingPositions, this->castleRights);
 				this->log.push_back(entry);
 				this->isWhiteToMove = !this->isWhiteToMove; // change turn
-				this->getValidMoves(); // get moves for the next player
+				this->getValidMoves(); // Get moves for the next player
 				break;
 			}
 		}
@@ -144,7 +156,8 @@ class GameState {
 	private: void getValidMoves() {
 		this->validMoves.clear();
 		this->getAllMoves(this->validMoves); // get all moves
-		this->removeIllegalMoves(this->validMoves); // remove the invalid moves
+		this->addCastlingMoves(this->validMoves); // add castling if player is allowed to
+        this->removeIllegalMoves(this->validMoves); // remove the invalid moves
 	}
 	
 	// Helper function to fill the "validMoves" variable with all moves (also illegal moves) that the user has available
@@ -319,6 +332,33 @@ class GameState {
 			}
 		}
 	}	
+	
+	// Function to add all the castling moves if the player is allowed to
+	private: void addCastlingMoves(list<array<Vector, 2>>& list) {
+        char turn = this->isWhiteToMove ? 'w' : 'b';
+        int r = this->kingPositions.at(turn).x;
+        int c = this->kingPositions.at(turn).y;
+        if (this->castleRights.at(turn)[0]) {
+            // Check if the castling squares are not under attack and clear
+            if (this->board[r][c - 1] == "  " && this->board[r][c - 2] == "  " && this->board[r][c - 3] == "  ") {
+                if (!this->squareUnderAttack(*new Vector(r, c)) && !this->squareUnderAttack(*new Vector(r, c - 1)) &&
+                    !this->squareUnderAttack(*new Vector(r, c - 2))) {
+                    // Castle long
+                    list.push_back(array<Vector, 2>{*new Vector(r, c), *new Vector(r, c - 2)});
+                }
+            }
+        }
+        if (this->castleRights.at(turn)[1]) {
+            // Check if the castling squares are not under attack and clear
+            if (this->board[r][c + 1] == "  " && this->board[r][c + 2] == "  ") {
+                if (!this->squareUnderAttack(*new Vector(r, c)) && !this->squareUnderAttack(*new Vector(r, c + 1)) &&
+                    !this->squareUnderAttack(*new Vector(r, c + 2))) {
+                    // Castle short
+                    list.push_back(array<Vector, 2>{*new Vector(r, c), *new Vector(r, c + 2)});
+                }
+            }
+        }
+    }
 	
 };
 
