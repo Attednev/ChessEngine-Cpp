@@ -5,7 +5,6 @@
 using namespace std;
 
 // NOTE: Castling
-// NOTE: Add pawn promotion
 
 // Helper class to store a x and y value
 class Vector {
@@ -231,6 +230,10 @@ class GameState {
 			list.push_back(array<Vector, 2>{*new Vector(r, c), *new Vector(r + offset, c)});
 			if ((this->isWhiteToMove && r == 6 || !this->isWhiteToMove && r == 1) && this->board[r + (2 * offset)][c] == "  ") { // Double pawn advance (Check the field 2 in front of the pawn)
 				list.push_back(array<Vector, 2>{*new Vector(r, c), *new Vector(r + (2 * offset), c)});
+			}
+			if (endRow == 0 || endRow == 7) {
+				// Promotion (Currently promotes only to queen [Maybe give a return value and make a function that receives a number from 1 - 4 to choose which piece you want])
+				this->board[startRow][startCol].at(1) = 'Q';
 			}
 		}
 		// Captures
