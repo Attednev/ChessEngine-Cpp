@@ -235,10 +235,10 @@ class GameState {
 		}
 		// Captures
 		char enemy = this->isWhiteToMove ? 'b' : 'w';
-		if (c <= 7 && (this->board[r + offset][c + 1]).at(0) == enemy) { // Capture to the right
+		if (c + 1<= 7 && (this->board[r + offset][c + 1]).at(0) == enemy) { // Capture to the right
 			list.push_back(array<Vector, 2>{*new Vector(r, c), *new Vector(r + offset, c + 1)});
 		}
-		if (c >= 0 && (this->board[r + offset][c - 1]).at(0) == enemy) { // Capture to the left
+		if (c - 1 >= 0 && (this->board[r + offset][c - 1]).at(0) == enemy) { // Capture to the left
 			list.push_back(array<Vector, 2>{*new Vector(r, c), *new Vector(r + offset, c - 1)});
 		}
 		// En passant (Only possible if white is in row 3 or black is on row 4 (log.size should not be emtpy. The only
