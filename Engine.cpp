@@ -40,7 +40,7 @@ class GameState {
 		{"bP", "bP", "bP", "bP", "bP", "bP", "bP", "bP"},
 		{"  ", "  ", "  ", "  ", "  ", "  ", "  ", "  "},
 		{"  ", "  ", "  ", "  ", "  ", "  ", "  ", "  "},
-		{"  ", "  ", "  ", "  ", "  ", "  ", "  ", "  "},
+		{"  ", "  ", "  ", "wP", "  ", "  ", "  ", "  "},
 		{"  ", "  ", "  ", "  ", "  ", "  ", "  ", "  "},
 		{"wP", "wP", "wP", "wP", "wP", "wP", "wP", "wP"},
 		{"wR", "wN", "wB", "wQ", "wK", "wB", "wN", "wR"}
@@ -112,6 +112,7 @@ class GameState {
 				this->log.push_back(entry);
 				this->isWhiteToMove = !this->isWhiteToMove; // change turn
 				this->getValidMoves(); // get moves for the next player
+				break;
 			}
 		}
 	}
@@ -138,6 +139,7 @@ class GameState {
 	
 	// This function fills the "validMoves" variable with all the possible moves that the current player can play
 	private: void getValidMoves() {
+		this->validMoves.clear();
 		this->getAllMoves(this->validMoves); // get all moves
 		this->removeIllegalMoves(this->validMoves); // remove the invalid moves
 	}
@@ -220,12 +222,14 @@ class GameState {
 	// Function to add all the possible moves for pawns
 	private: void addPawnMove(int r, int c, list<array<Vector, 2>>& list) {
 		int offset = this->isWhiteToMove ? -1 : 1;
+		// Normal pawn advances
 		if (this->board[r + offset][c] == "  ") { // Single pawn advance (Check field in front of the pawn)
 			list.push_back(array<Vector, 2>{*new Vector(r, c), *new Vector(r + offset, c)});
-			if (r == 6 && this->board[r + (2 * offset)][c] == "  ") { // Double pawn advance (Check the field 2 in front of the pawn)
+			if ((this->isWhiteToMove && r == 6 || !this->isWhiteToMove && r == 1) && this->board[r + (2 * offset)][c] == "  ") { // Double pawn advance (Check the field 2 in front of the pawn)
 				list.push_back(array<Vector, 2>{*new Vector(r, c), *new Vector(r + (2 * offset), c)});
 			}
 		}
+		// Captures
 		char enemy = this->isWhiteToMove ? 'b' : 'w';
 		if (c <= 7 && (this->board[r + offset][c + 1]).at(0) == enemy) { // Capture to the right
 			list.push_back(array<Vector, 2>{*new Vector(r, c), *new Vector(r + offset, c + 1)});
@@ -233,6 +237,18 @@ class GameState {
 		if (c >= 0 && (this->board[r + offset][c - 1]).at(0) == enemy) { // Capture to the left
 			list.push_back(array<Vector, 2>{*new Vector(r, c), *new Vector(r + offset, c - 1)});
 		}
+		// En passant (Only possible if white is in row 3 or black is on row 4 (log.size should not be emtpy. The only
+		// way that log is empty, is when creating custom positions, which should be possible)
+        if (this->log.size() > 1 && (this->isWhiteToMove && r == 3 || !this->isWhiteToMove && r == 4)) {
+            auto lastBoard = (*next(this->log.end(), -2)).board;  // Get the last board
+            // Check if the last move was a 2 step pawn advance either left or right of the current column
+            if (c - 1 >= 0 && lastBoard[r + (2 * offset)][c - 1].at(1) == 'P' && this->board[r + offset][c - 1] == "  " && this->board[r + (2 * offset)][c - 1] == "  ") {
+                list.push_back(array<Vector, 2>{*new Vector(r, c), *new Vector(r + offset, c - 1)});
+            } else if (c + 1 <= 7 && lastBoard[r + (2 * offset)][c + 1].at(1) == 'P' && this->board[r + offset][c + 1] == "  " && this->board[r + (2 * offset)][c + 1] == "  ") {
+                list.push_back(array<Vector, 2>{*new Vector(r, c), *new Vector(r + offset, c + 1)});
+            }
+
+        }
 	}
 	
 	// Function to add all the possible moves for rooks
