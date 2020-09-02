@@ -5,7 +5,6 @@
 using namespace std;
 
 // NOTE: Castling
-// NOTE: Add en-passant
 // NOTE: Add pawn promotion
 
 // Helper class to store a x and y value
@@ -40,7 +39,7 @@ class GameState {
 		{"bP", "bP", "bP", "bP", "bP", "bP", "bP", "bP"},
 		{"  ", "  ", "  ", "  ", "  ", "  ", "  ", "  "},
 		{"  ", "  ", "  ", "  ", "  ", "  ", "  ", "  "},
-		{"  ", "  ", "  ", "wP", "  ", "  ", "  ", "  "},
+		{"  ", "  ", "  ", "  ", "  ", "  ", "  ", "  "},
 		{"  ", "  ", "  ", "  ", "  ", "  ", "  ", "  "},
 		{"wP", "wP", "wP", "wP", "wP", "wP", "wP", "wP"},
 		{"wR", "wN", "wB", "wQ", "wK", "wB", "wN", "wR"}
@@ -105,6 +104,11 @@ class GameState {
 				// Update King position before executing the move
 				if (this->board[startRow][startCol].at(1) == 'K') {
 					this->kingPositions.at(this->board[startRow][startCol].at(0)) = move[1];
+				} else if (this->board[startRow][startCol].at(1) == 'P') {
+                    if (startCol != endCol && this->board[endRow][endCol].at(1) == ' ') {
+                        // Captured en passant -> clear the square behind the current one
+                        this->board[startRow][endCol] = "  ";
+                    }
 				}
 				this->move(startRow, startCol, endRow, endCol);
 				// log the board
