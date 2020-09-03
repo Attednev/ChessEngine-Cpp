@@ -22,6 +22,11 @@ As this engine is written in c++ you will have to use some sort of interface com
         -   `-1: Move could not be performed`
         -   `0: Move executed successfully`
         -   `1: Move executed sucessfully and pawn can be promoted (use the promote method)`
+        -   `2: Stalemate`
+        -   `3: White is in check`
+        -   `4: Black is in check`
+        -   `5: White got checkmated`
+        -   `6: Black got checkmated`
 -   In order to receive the possible moves for a specific piece, you have to call the "getMovesForPiece" mathod and pass in 2 arguments:
     -   Row of the piece
     -   Column of the piece

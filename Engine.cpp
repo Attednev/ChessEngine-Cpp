@@ -116,8 +116,6 @@ class GameState {
                     } else if (startCol - endCol == -2) { // Castled short
                         this->move(startRow, 7, startRow, 5);
                     }
-					// Update King position before executing the move
-					this->kingPositions.at(this->board[startRow][startCol].at(0)) = move[1];
 				} else if (this->board[startRow][startCol].at(1) == 'P') {
                     if (startCol != endCol && this->board[endRow][endCol].at(1) == ' ') {
                         // Captured en passant -> clear the square behind the current one
@@ -141,6 +139,14 @@ class GameState {
 				this->log.push_back(entry);
 				this->isWhiteToMove = !this->isWhiteToMove; // change turn
 				this->getValidMoves(); // Get moves for the next player
+                if (this->validMoves.empty()) {
+                    if (this->isCheck()) {
+                        return this->isWhiteToMove ? 5 : 6; // Return 5 or 6 because someone has lost (5: White lost, 6: Black lost)
+                    }
+                    return 2; // Return 2 because it is a stalemate
+                } else if (this->isCheck()) {
+                    return this->isWhiteToMove ? 3 : 4; // Return 3 or 4 because it is check (3: White in check, 4: Black in check)
+                }
 				return this->inPromotion ? 1 : 0; // Return 1 if the move results in a promotion, 0 if it is a normal move
 			}
 		}
@@ -149,7 +155,12 @@ class GameState {
 	
 	// Helper function to only execute the move without logging and checking for validity
 	private: void move(int startRow, int startCol, int endRow, int endCol) {
-		// play the move
+		// Update King position before executing the move
+        if (this->board[startRow][startCol].at(1) == 'K') {
+            this->kingPositions.at(this->board[startRow][startCol].at(0)).x = endRow;
+            this->kingPositions.at(this->board[startRow][startCol].at(0)).y = endCol;
+        }
+		// Play the move
 		this->board[endRow][endCol] = this->board[startRow][startCol];
 		this->board[startRow][startCol] = "  ";
 	}
@@ -240,17 +251,19 @@ class GameState {
 	
 	// Helper function to remove all illegal moves from the list
 	private: void removeIllegalMoves(list<array<Vector, 2>>& list) {
-		// loop through the list (we have to check i < list.size() since we use an unsigned int which will never be < 0, which means that else this would be an infinite loop)
+		// Loop through the list (we have to check i < list.size() since we use an unsigned int which will never be < 0, which means that else this would be an infinite loop)
         for (unsigned int i = list.size() - 1; i >= 0 && i < list.size(); i--) {
             // Get the array and store the piece that is in the destination square so we can undo it later
             array<Vector, 2> arr = *next(list.begin(), i);
             string occupiedSquare = this->board[arr[1].x][arr[1].y];
+            map<char, Vector> tmp = this->kingPositions; // Store king positions
             this->move(arr[0].x, arr[0].y, arr[1].x, arr[1].y); // make the move
             if (this->isCheck()) {
                 // The King is in check and therefore that piece is not allowed to be moved
                 list.erase(next(list.begin(), i));// Remove the move from the list (remove by iterator)
             }
-            this->undo(arr, occupiedSquare); // undo move
+            this->undo(arr, occupiedSquare); // Undo move
+            this->kingPositions = tmp; // Undo king positions
         }
 	}
 	
