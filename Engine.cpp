@@ -4,6 +4,8 @@
 #include <map>
 using namespace std;
 
+// Promotion return value?
+
 // Helper class to store a x and y value
 class Vector {
 	public: int x;
@@ -42,6 +44,8 @@ class GameState {
 		{"wR", "wN", "wB", "wQ", "wK", "wB", "wN", "wR"}
 	};
 	private: bool isWhiteToMove = true;
+	private: bool inPromotion = false;
+	private: Vector promotionPos;
 	private: list<array<Vector, 2>> validMoves;
 	private: map<char, Vector> kingPositions = {
 		{'w', Vector(7, 4)},
@@ -52,9 +56,13 @@ class GameState {
 		{'b', array<bool, 2>{true, true}}
 	};
 	private: list<LogEntry> log;
-	
-	// Constructor: calls the getValidMoves function so the white player can play a move
-	public: GameState() { this->getValidMoves(); }
+
+	// Constructor: calls the getValidMoves function so the white player can play a moved
+	public: GameState() { 
+		this->getValidMoves();
+		LogEntry entry(this->board, this->isWhiteToMove,this->kingPositions, this->castleRights);
+		this->log.push_back(entry);
+	}
 	
 	// This function allows an external program to access the possible moves for a single piece
 	public: list<Vector> getMovesForPiece(int r, int c) {
@@ -92,8 +100,8 @@ class GameState {
 		return returnVal;
 	}
 	
-	// This function is used for an external program which uses this engine to pass in a move a player makes
-	public: void playMove(int startRow, int startCol, int endRow, int endCol) {
+	// This function returns 1 on promotion, 0 on a successful move and -1 on an error
+	public: int playMove(int startRow, int startCol, int endRow, int endCol) {
 		Vector move[2] = {{startRow, startCol}, {endRow, endCol}};
 		for (array<Vector,2> arr : this->validMoves) {
 			if (arr[0].equals(move[0]) && arr[1].equals(move[1])) {
@@ -115,8 +123,9 @@ class GameState {
                         this->board[startRow][endCol] = "  ";
                     }
 					if (endRow == 0 || endRow == 7) {
-						// Promotion (Currently promotes only to queen [Maybe give a return value and make a function that receives a number from 1 - 4 to choose which piece you want])
-						this->board[startRow][startCol].at(1) = 'Q';
+						// Promotion
+                        this->inPromotion = true;
+                        this->promotionPos = *new Vector(endRow, endCol);
 					}
 				} else if (this->board[startRow][startCol].at(1) == 'R') {
 					if (startCol == 0) { // Take away right to castle long
@@ -131,9 +140,10 @@ class GameState {
 				this->log.push_back(entry);
 				this->isWhiteToMove = !this->isWhiteToMove; // change turn
 				this->getValidMoves(); // Get moves for the next player
-				break;
+				return this->inPromotion ? 1 : 0; // Return 1 if the move results in a promotion, 0 if it is a normal move
 			}
 		}
+		return -1; // Return -1 if no move could be executed
 	}
 	
 	// Helper function to only execute the move without logging and checking for validity
@@ -155,6 +165,38 @@ class GameState {
 		this->castleRights = entry.castleRights;
 		this->getValidMoves(); // get moves for the current player
 	}
+	
+	// This function needs to be called when a pawn advances to the last rank and turns that pawn into the specified piece
+    // Accepted values for the function are 1 (Queen), 2 (Knight), 3 (Bishop) and 4 (Rook)
+    // This function returns 0 on success and -1 on error
+	public: int promote(int piece) {
+		if (this->inPromotion) {
+			char promoteTo;
+			switch (piece) {
+				case 1:
+					promoteTo = 'Q';
+					break;
+				case 2:
+					promoteTo = 'N';
+					break;
+				case 3:
+					promoteTo = 'B';
+					break;
+				case 4:
+					promoteTo = 'R';
+					break;
+				default:
+					return -1;
+			}
+			// Modify the current board
+			this->board[this->promotionPos.x][this->promotionPos.y].at(1) = promoteTo;
+			// Adjust the log
+			this->inPromotion = false;
+			return 0;
+		}
+		return -1;
+	}
+	
 	
 	// This function fills the "validMoves" variable with all the possible moves that the current player can play
 	private: void getValidMoves() {
@@ -243,7 +285,7 @@ class GameState {
 	private: void addPawnMove(int r, int c, list<array<Vector, 2>>& list) {
 		int offset = this->isWhiteToMove ? -1 : 1;
 		// Normal pawn advances
-		if (this->board[r + offset][c] == "  ") { // Single pawn advance (Check field in front of the pawn)
+		if (r + offset < 7 && r + offset > 0 && this->board[r + offset][c] == "  ") { // Single pawn advance (Check field in front of the pawn)
 			list.push_back(array<Vector, 2>{*new Vector(r, c), *new Vector(r + offset, c)});
 			if ((this->isWhiteToMove && r == 6 || !this->isWhiteToMove && r == 1) && this->board[r + (2 * offset)][c] == "  ") { // Double pawn advance (Check the field 2 in front of the pawn)
 				list.push_back(array<Vector, 2>{*new Vector(r, c), *new Vector(r + (2 * offset), c)});
@@ -251,12 +293,12 @@ class GameState {
 		}
 		// Captures
 		char enemy = this->isWhiteToMove ? 'b' : 'w';
-		if (c + 1<= 7 && (this->board[r + offset][c + 1]).at(0) == enemy) { // Capture to the right
-			list.push_back(array<Vector, 2>{*new Vector(r, c), *new Vector(r + offset, c + 1)});
-		}
-		if (c - 1 >= 0 && (this->board[r + offset][c - 1]).at(0) == enemy) { // Capture to the left
-			list.push_back(array<Vector, 2>{*new Vector(r, c), *new Vector(r + offset, c - 1)});
-		}
+		if (r + offset <= 7 && r + offset >= 0 && c + 1 <= 7 && (this->board[r + offset][c + 1]).at(0) == enemy) { // Capture to the right
+            list.push_back(array<Vector, 2>{*new Vector(r, c), *new Vector(r + offset, c + 1)});
+        }
+        if (r + offset <= 7 && r + offset >= 0 && c - 1 >= 0 && (this->board[r + offset][c - 1]).at(0) == enemy) { // Capture to the left
+            list.push_back(array<Vector, 2>{*new Vector(r, c), *new Vector(r + offset, c - 1)});
+        }
 		// En passant (Only possible if white is in row 3 or black is on row 4 (log.size should not be emtpy. The only
 		// way that log is empty, is when creating custom positions, which should be possible)
         if (this->log.size() > 1 && (this->isWhiteToMove && r == 3 || !this->isWhiteToMove && r == 4)) {

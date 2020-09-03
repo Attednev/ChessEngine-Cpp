@@ -26,3 +26,7 @@ As this engine is written in c++ you will have to use some sort of interface com
     -   e.g. `gs.undoMove();`
 -   If you want to access to board state, you can simply access the "board" variable inside the GameState object
     -   e.g. `gs.board;`
+-   Once a pawn advances to the end of the board, the "promote" method has to be called, as the program awaits that input
+    -   The "promote" method taks an interger value as argument which defines the piece the pawn should become:
+    -   `1: Queen, 2: Knight, 3: Bishop, 4: Rook`
+    -   e.g. `gs.promote(1);`
