@@ -104,37 +104,14 @@ class GameState {
 		Vector move[2] = {{startRow, startCol}, {endRow, endCol}};
 		for (array<Vector,2> arr : this->validMoves) {
 			if (arr[0].equals(move[0]) && arr[1].equals(move[1])) {
-				// Is the move allowed
-				if (this->board[startRow][startCol].at(1) == 'K') {
-					// Take away the castle right for this player as the king move
-                    this->castleRights.at(this->isWhiteToMove ? 'w' : 'b')[0] = false;
-                    this->castleRights.at(this->isWhiteToMove ? 'w' : 'b')[1] = false;
-                    if (startCol - endCol == 2) { // Castled long
-                        this->move(startRow, 0, startRow, 3);
-                    } else if (startCol - endCol == -2) { // Castled short
-                        this->move(startRow, 7, startRow, 5);
-                    }
-				} else if (this->board[startRow][startCol].at(1) == 'P') {
-                    if (startCol != endCol && this->board[endRow][endCol].at(1) == ' ') {
-                        // Captured en passant -> clear the square behind the current one
-                        this->board[startRow][endCol] = "  ";
-                    }
-					if (endRow == 0 || endRow == 7) {
-						// Promotion
-                        this->inPromotion = true;
-                        this->promotionPos = *new Vector(endRow, endCol);
-					}
-				} else if (this->board[startRow][startCol].at(1) == 'R') {
-					if (startCol == 0) { // Take away right to castle long
-                        this->castleRights.at(this->isWhiteToMove ? 'w' : 'b')[0] = false;
-                    } else if (startCol == 7) { // Take away right to castle short
-                        this->castleRights.at(this->isWhiteToMove ? 'w' : 'b')[1] = false;
-                    }
-				}
+                // The move is allowed
+                this->sideEffects(startRow, startCol, endRow, endCol);
 				this->move(startRow, startCol, endRow, endCol);
 				// Log the board
 				LogEntry entry(this->board, this->isWhiteToMove,this->kingPositions, this->castleRights);
 				this->log.push_back(entry);
+				// Check for insufficient material
+                if (this->checkInsufficientMaterial()) return 2; // Stalemate due to insufficient material
 				this->isWhiteToMove = !this->isWhiteToMove; // change turn
 				this->getValidMoves(); // Get moves for the next player
                 if (this->validMoves.empty()) {
@@ -149,6 +126,62 @@ class GameState {
 			}
 		}
 		return -1; // Return -1 if no move could be executed
+	}
+	
+    // Helper function to execute some side effects (withdraw castle right, castling, en passant, promotion)
+	private: void sideEffects(int startRow, int startCol, int endRow, int endCol) {
+        if (this->board[startRow][startCol].at(1) == 'K') {
+            // Take away the castle right for this player as the king move
+            this->castleRights.at(this->isWhiteToMove ? 'w' : 'b')[0] = false;
+            this->castleRights.at(this->isWhiteToMove ? 'w' : 'b')[1] = false;
+            if (startCol - endCol == 2) { // Castled long
+                this->move(startRow, 0, startRow, 3);
+            } else if (startCol - endCol == -2) { // Castled short
+                this->move(startRow, 7, startRow, 5);
+            }
+        } else if (this->board[startRow][startCol].at(1) == 'P') {
+            if (startCol != endCol && this->board[endRow][endCol].at(1) == ' ') {
+                // Captured en passant -> clear the square behind the current one
+                this->board[startRow][endCol] = "  ";
+            }
+            if (endRow == 0 || endRow == 7) {
+                // Promotion
+                this->inPromotion = true;
+                this->promotionPos = *new Vector(endRow, endCol);
+            }
+        } else if (this->board[startRow][startCol].at(1) == 'R') {
+            if (startCol == 0) { // Take away right to castle long
+                this->castleRights.at(this->isWhiteToMove ? 'w' : 'b')[0] = false;
+            } else if (startCol == 7) { // Take away right to castle short
+                this->castleRights.at(this->isWhiteToMove ? 'w' : 'b')[1] = false;
+            }
+        }
+	}
+	
+	// This function checks if there is insufficient material on the board
+	private: bool checkInsufficientMaterial() {
+        // Store all pieces into lists
+        list<char> whitePiecesLeft;
+        list<char> blackPiecesLeft;
+        for (auto &i : this->board) {
+            for (auto &j : i) {
+                if (j.at(0) == 'w') {
+                    whitePiecesLeft.push_back(j.at(1));
+                } else if (j.at(0) == 'b') {
+                    blackPiecesLeft.push_back(j.at(1));
+                }
+            }
+        }
+        return GameState::checkIfListIsInStaleMate(whitePiecesLeft) && GameState::checkIfListIsInStaleMate(blackPiecesLeft);
+	}
+	
+	// Helper function to check if a list of pieces is in a stalemate position
+	private: static bool checkIfListIsInStaleMate(list<char> pieces) {
+        pieces.sort();
+        if (pieces.size() == 1) return true; // Lone King
+        if (pieces.size() == 2) return pieces.front() == 'B' || pieces.back() == 'N'; // King and Bishop or King and Knight
+        if (pieces.size() == 3) return pieces.back() == 'N' && *next(pieces.begin(), 1) == 'N'; // King and two Knights
+        return false;
 	}
 	
 	// Helper function to only execute the move without logging and checking for validity
