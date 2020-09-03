@@ -4,8 +4,6 @@
 #include <map>
 using namespace std;
 
-// Return values for playMove (King in check etc.)
-
 // Helper class to store a x and y value
 class Vector {
 	public: int x;
