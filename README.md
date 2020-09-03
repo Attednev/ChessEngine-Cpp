@@ -18,6 +18,10 @@ As this engine is written in c++ you will have to use some sort of interface com
     -   Row of the destination sqaure
     -   Column of the destination square
     -   e.g. `gs.playMove(6, 4, 4, 4);`
+    -   This method returns an interger value which should be captured, as it tells if a pawn can be promoted and the game awaits an input, else the game wont continue:
+        -   `-1: Move could not be performed`
+        -   `0: Move executed successfully`
+        -   `1: Move executed sucessfully and pawn can be promoted (use the promote method)`
 -   In order to receive the possible moves for a specific piece, you have to call the "getMovesForPiece" mathod and pass in 2 arguments:
     -   Row of the piece
     -   Column of the piece

@@ -4,7 +4,7 @@
 #include <map>
 using namespace std;
 
-// Promotion return value?
+// Return values for playMove (King in check etc.)
 
 // Helper class to store a x and y value
 class Vector {
@@ -17,6 +17,7 @@ class Vector {
 	public: bool equals(Vector v) const { return (this->x == v.x && this->y == v.y); }
 };
 
+// Helper class to store a GameState
 class LogEntry {
 	public: string board[8][8];
 	public: bool isWhiteToMove;
@@ -196,7 +197,6 @@ class GameState {
 		}
 		return -1;
 	}
-	
 	
 	// This function fills the "validMoves" variable with all the possible moves that the current player can play
 	private: void getValidMoves() {
