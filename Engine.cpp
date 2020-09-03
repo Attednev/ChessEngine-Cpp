@@ -285,7 +285,7 @@ class GameState {
 	private: void addPawnMove(int r, int c, list<array<Vector, 2>>& list) {
 		int offset = this->isWhiteToMove ? -1 : 1;
 		// Normal pawn advances
-		if (r + offset < 7 && r + offset > 0 && this->board[r + offset][c] == "  ") { // Single pawn advance (Check field in front of the pawn)
+		if (r + offset <= 7 && r + offset >= 0 && this->board[r + offset][c] == "  ") { // Single pawn advance (Check field in front of the pawn)
 			list.push_back(array<Vector, 2>{*new Vector(r, c), *new Vector(r + offset, c)});
 			if ((this->isWhiteToMove && r == 6 || !this->isWhiteToMove && r == 1) && this->board[r + (2 * offset)][c] == "  ") { // Double pawn advance (Check the field 2 in front of the pawn)
 				list.push_back(array<Vector, 2>{*new Vector(r, c), *new Vector(r + (2 * offset), c)});
