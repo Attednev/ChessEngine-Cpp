@@ -45,7 +45,7 @@ class GameState {
 	};
 	private: bool isWhiteToMove = true;
 	private: bool inPromotion = false;
-	private: Vector promotionPos;
+	private: Vector promotionPos = *new Vector(0, 0);
 	private: list<array<Vector, 2>> validMoves;
 	private: map<char, Vector> kingPositions = {
 		{'w', Vector(7, 4)},
