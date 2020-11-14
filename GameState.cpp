@@ -6,6 +6,10 @@ GameState::GameState() {
     this->log.push_back(entry);
 }
 
+GameState::~GameState() {
+    delete promotionPos;
+}
+
 std::list <Vector> GameState::getMovesForPiece(int r, int c) {
     // Get all the possible moves (same as in the normal process for validating the moves)
     char turn = this->isWhiteToMove ? 'w' : 'b';
