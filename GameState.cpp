@@ -3,7 +3,7 @@
 GameState::GameState() {
     this->getValidMoves();
     LogEntry entry(this->board, this->isWhiteToMove, this->kingPositions, this->castleRights);
-    this->log.push_back(entry);
+    this->log.emplace_back(entry);
 }
 
 GameState::~GameState() {
@@ -40,7 +40,7 @@ std::list <Vector> GameState::getMovesForPiece(int r, int c) {
     // Remove the source position since it is not needed
     std::list <Vector> returnVal;
     for (std::array<Vector, 2> m : moves) {
-        returnVal.push_back(m[1]);
+        returnVal.emplace_back(m[1]);
     }
     return returnVal;
 }
@@ -55,7 +55,7 @@ int GameState::playMove(int startRow, int startCol, int endRow, int endCol) {
             this->move(startRow, startCol, endRow, endCol);
             // Log the board
             LogEntry entry(this->board, this->isWhiteToMove, this->kingPositions, this->castleRights);
-            this->log.push_back(entry);
+            this->log.emplace_back(entry);
             // Check for insufficient material
             if (this->checkInsufficientMaterial()) return 2; // Stalemate due to insufficient material
             this->isWhiteToMove = !this->isWhiteToMove; // change turn
@@ -113,9 +113,9 @@ bool GameState::checkInsufficientMaterial() {
     for (auto &i : this->board) {
         for (auto &j : i) {
             if (j.at(0) == 'w') {
-                whitePiecesLeft.push_back(j.at(1));
+                whitePiecesLeft.emplace_back(j.at(1));
             } else if (j.at(0) == 'b') {
-                blackPiecesLeft.push_back(j.at(1));
+                blackPiecesLeft.emplace_back(j.at(1));
             }
         }
     }
@@ -267,21 +267,21 @@ void GameState::addPawnMove(int r, int c, std::list <std::array<Vector, 2>> &lis
     // Normal pawn advances
     if (r + offset <= 7 && r + offset >= 0 &&
         this->board[r + offset][c] == "  ") { // Single pawn advance (Check field in front of the pawn)
-        list.push_back(std::array < Vector, 2 > {*new Vector(r, c), *new Vector(r + offset, c)});
+        list.emplace_back(std::array < Vector, 2 > {*new Vector(r, c), *new Vector(r + offset, c)});
         if ((this->isWhiteToMove && r == 6 || !this->isWhiteToMove && r == 1) && this->board[r + (2 * offset)][c] ==
                                                                                  "  ") { // Double pawn advance (Check the field 2 in front of the pawn)
-            list.push_back(std::array < Vector, 2 > {*new Vector(r, c), *new Vector(r + (2 * offset), c)});
+            list.emplace_back(std::array < Vector, 2 > {*new Vector(r, c), *new Vector(r + (2 * offset), c)});
         }
     }
     // Captures
     char enemy = this->isWhiteToMove ? 'b' : 'w';
     if (r + offset <= 7 && r + offset >= 0 && c + 1 <= 7 &&
         (this->board[r + offset][c + 1]).at(0) == enemy) { // Capture to the right
-        list.push_back(std::array < Vector, 2 > {*new Vector(r, c), *new Vector(r + offset, c + 1)});
+        list.emplace_back(std::array < Vector, 2 > {*new Vector(r, c), *new Vector(r + offset, c + 1)});
     }
     if (r + offset <= 7 && r + offset >= 0 && c - 1 >= 0 &&
         (this->board[r + offset][c - 1]).at(0) == enemy) { // Capture to the left
-        list.push_back(std::array < Vector, 2 > {*new Vector(r, c), *new Vector(r + offset, c - 1)});
+        list.emplace_back(std::array < Vector, 2 > {*new Vector(r, c), *new Vector(r + offset, c - 1)});
     }
     // En passant (Only possible if white is in row 3 or black is on row 4 (log.size should not be emtpy. The only
     // way that log is empty, is when creating custom positions, which should be possible)
@@ -290,10 +290,10 @@ void GameState::addPawnMove(int r, int c, std::list <std::array<Vector, 2>> &lis
         // Check if the last move was a 2 step pawn advance either left or right of the current column
         if (c - 1 >= 0 && lastBoard[r + (2 * offset)][c - 1].at(1) == 'P' &&
             this->board[r + offset][c - 1] == "  " && this->board[r + (2 * offset)][c - 1] == "  ") {
-            list.push_back(std::array < Vector, 2 > {*new Vector(r, c), *new Vector(r + offset, c - 1)});
+            list.emplace_back(std::array < Vector, 2 > {*new Vector(r, c), *new Vector(r + offset, c - 1)});
         } else if (c + 1 <= 7 && lastBoard[r + (2 * offset)][c + 1].at(1) == 'P' &&
                    this->board[r + offset][c + 1] == "  " && this->board[r + (2 * offset)][c + 1] == "  ") {
-            list.push_back(std::array < Vector, 2 > {*new Vector(r, c), *new Vector(r + offset, c + 1)});
+            list.emplace_back(std::array < Vector, 2 > {*new Vector(r, c), *new Vector(r + offset, c + 1)});
         }
 
     }
@@ -319,7 +319,7 @@ void GameState::bishopRookHelper(const int *rows, const int *cols, int r, int c,
         for (int row = r + rows[i], col = c + cols[i];
              row < 8 && row >= 0 && col < 8 && col >= 0; row += rows[i], col += cols[i]) {
             if ((this->board[row][col]).at(0) == turn) break; // Own Piece, so no need to keep on checking
-            list.push_back(std::array < Vector, 2 > {*new Vector(r, c), *new Vector(row, col)});
+            list.emplace_back(std::array < Vector, 2 > {*new Vector(r, c), *new Vector(row, col)});
             if ((this->board[row][col]).at(0) == enemy)
                 break; // Enemy Piece, so allow to capture, but dont go further
         }
@@ -335,7 +335,7 @@ void GameState::addKnightMove(int r, int c, std::list <std::array<Vector, 2>> &l
         int col = c + cols[i];
         // Inside the board and not attacking an ally
         if (row >= 0 && row < 8 && col >= 0 && col < 8 && (this->board[row][col]).at(0) != turn) {
-            list.push_back(std::array < Vector, 2 > {*new Vector(r, c), *new Vector(row, col)});
+            list.emplace_back(std::array < Vector, 2 > {*new Vector(r, c), *new Vector(row, col)});
         }
     }
 }
@@ -353,7 +353,7 @@ void GameState::addKingMove(int r, int c, std::list <std::array<Vector, 2>> &lis
         int row = r + rows[i];
         int col = c + cols[i];
         if (row >= 0 && row < 8 && col >= 0 && col < 8 && (this->board[row][col]).at(0) != turn) {
-            list.push_back(std::array < Vector, 2 > {*new Vector(r, c), *new Vector(row, col)});
+            list.emplace_back(std::array < Vector, 2 > {*new Vector(r, c), *new Vector(row, col)});
         }
     }
 }
@@ -368,7 +368,7 @@ void GameState::addCastlingMoves(std::list <std::array<Vector, 2>> &list) {
             if (!this->squareUnderAttack(*new Vector(r, c)) && !this->squareUnderAttack(*new Vector(r, c - 1)) &&
                 !this->squareUnderAttack(*new Vector(r, c - 2))) {
                 // Castle long
-                list.push_back(std::array < Vector, 2 > {*new Vector(r, c), *new Vector(r, c - 2)});
+                list.emplace_back(std::array < Vector, 2 > {*new Vector(r, c), *new Vector(r, c - 2)});
             }
         }
     }
@@ -378,7 +378,7 @@ void GameState::addCastlingMoves(std::list <std::array<Vector, 2>> &list) {
             if (!this->squareUnderAttack(*new Vector(r, c)) && !this->squareUnderAttack(*new Vector(r, c + 1)) &&
                 !this->squareUnderAttack(*new Vector(r, c + 2))) {
                 // Castle short
-                list.push_back(std::array < Vector, 2 > {*new Vector(r, c), *new Vector(r, c + 2)});
+                list.emplace_back(std::array < Vector, 2 > {*new Vector(r, c), *new Vector(r, c + 2)});
             }
         }
     }
